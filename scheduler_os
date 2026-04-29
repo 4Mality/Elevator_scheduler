@@ -36,13 +36,13 @@ typedef struct {
 
 int main(int argc, char *argv[]) {
     FILE *buildingFile;
-    // FILE *peopleFile;
+    FILE *peopleFile;
 
     Elevator elevators[MAX_ELEVATORS];
-    // Person people[MAX_PEOPLE];
+    Person people[MAX_PEOPLE];
 
     int elevatorCount = 0;
-    // int peopleCount = 0;
+    int peopleCount = 0;
     char response[MAX_RESPONSE];
 
     if (argc < 3) {
