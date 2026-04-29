@@ -1,5 +1,6 @@
 #include <curl/curl.h>
 #include <unistd.h>
+#include "api.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +11,7 @@
 #define MAX_PEOPLE 1000
 #define MAX_NAME 100
 #define MAX_ID 128
+#define MAX_RESPONSE 1024
 
 // elevator structure 
 typedef struct {
@@ -34,16 +36,17 @@ typedef struct {
 
 int main(int argc, char *argv[]) {
     FILE *buildingFile;
-    FILE *peopleFile;
+    // FILE *peopleFile;
 
     Elevator elevators[MAX_ELEVATORS];
-    Person people[MAX_PEOPLE];
+    // Person people[MAX_PEOPLE];
 
     int elevatorCount = 0;
-    int peopleCount = 0;
+    // int peopleCount = 0;
+    char response[MAX_RESPONSE];
 
     if (argc < 3) {
-        printf("Usage: %s <building_file> <people_file>\n", argv[0]);
+        printf("Usage: %s <building_file> <port>\n", argv[0]);
         return 1;
     }
 
@@ -83,6 +86,12 @@ int main(int argc, char *argv[]) {
     fclose(peopleFile);
 
     printf("Loaded %d elevators:\n\n", elevatorCount);
+
+
+    api_set_base_url(argv[2]);
+    api_start_simulation();
+    api_get_next_input(response, sizeof(response));
+    printf("API response: %s\n", response);
 
     for (int i = 0; i < elevatorCount; i++) {
         printf("Elevator: %s\n", elevators[i].id);
