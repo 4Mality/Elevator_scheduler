@@ -93,6 +93,25 @@ int main(int argc, char *argv[]) {
     api_get_next_input(response, sizeof(response));
     printf("API response: %s\n", response);
 
+    if(strcmp(response, "NONE") != 0){
+
+    char personID[MAX_ID];
+    int startFloor;
+    int endFloor;
+
+    sscanf(response, "%127[^|]|%d|%d", personID, &startFloor, &endFloor);
+
+    printf("Person ID: %s\n", personID);
+    printf("Start floor: %d\n", startFloor);
+    printf("End floor: %d\n", endFloor);
+
+    api_add_person_to_elevator(personID, elevators[0].id, response, sizeof(response));
+
+    printf("Add person response: %s\n", response);
+    }
+
+    
+
     for (int i = 0; i < elevatorCount; i++) {
         printf("Elevator: %s\n", elevators[i].id);
         printf("Lowest floor: %d\n", elevators[i].lowest);
