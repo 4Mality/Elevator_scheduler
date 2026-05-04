@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -std=c11
 LIBS = -lcurl -lpthread
 
 TARGET = scheduler_os
-SRC = scheduler_os.c api.c scheduler.c
+SRC = scheduler_os.c api.c
 
 all: $(TARGET)
 
