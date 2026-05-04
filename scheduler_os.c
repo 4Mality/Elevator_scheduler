@@ -45,21 +45,53 @@ static pthread_mutex_t outputMutex    = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  outputNotEmpty = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t  outputNotFull  = PTHREAD_COND_INITIALIZER;
 
-/* pick elevator whose range covers both floors; nearest current floor wins */
+/* pick elevator whose range covers both floors; skips full elevators, nearest wins */
 static const char *pick_elevator(int startFloor, int endFloor) {
-    int bestIdx  = 0;
-    int bestDist = INT_MAX;
+    char status[MAX_RESPONSE];
+    int bestIdx       = 0;
+    int bestDist      = INT_MAX;
+    int foundCapacity = 0;
 
     for (int i = 0; i < elevatorCount; i++) {
-        if (elevators[i].lowest  <= startFloor && startFloor <= elevators[i].highest &&
-            elevators[i].lowest  <= endFloor   && endFloor   <= elevators[i].highest) {
-            int dist = abs(elevators[i].current - startFloor);
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestIdx  = i;
+        if (elevators[i].lowest <= startFloor && startFloor <= elevators[i].highest &&
+            elevators[i].lowest <= endFloor   && endFloor   <= elevators[i].highest) {
+
+            int curFloor  = elevators[i].current;
+            int remaining = 1; /* assume space available if query fails */
+
+            if (api_get_elevator_status(elevators[i].id, status, sizeof(status)) == 0) {
+                char bayID[MAX_NAME], dir[4];
+                int pCount, remCap;
+                /* format: "bayID|curFloor|dir|passengerCount|remainingCapacity" */
+                if (sscanf(status, "%[^|]|%d|%[^|]|%d|%d",
+                           bayID, &curFloor, dir, &pCount, &remCap) == 5) {
+                    remaining = remCap;
+                }
+            }
+
+            if (remaining <= 0) continue;
+
+            int dist = abs(curFloor - startFloor);
+            if (!foundCapacity || dist < bestDist) {
+                bestDist      = dist;
+                bestIdx       = i;
+                foundCapacity = 1;
             }
         }
     }
+
+    /* fallback: all elevators full — pick nearest by static floor */
+    if (!foundCapacity) {
+        bestDist = INT_MAX;
+        for (int i = 0; i < elevatorCount; i++) {
+            if (elevators[i].lowest <= startFloor && startFloor <= elevators[i].highest &&
+                elevators[i].lowest <= endFloor   && endFloor   <= elevators[i].highest) {
+                int dist = abs(elevators[i].current - startFloor);
+                if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+            }
+        }
+    }
+
     return elevators[bestIdx].id;
 }
 
