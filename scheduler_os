@@ -8,12 +8,10 @@
 #include <limits.h>
 
 #define MAX_ELEVATORS 100
-#define MAX_PEOPLE 1000
 #define MAX_NAME 100
 #define MAX_ID 128
 #define MAX_RESPONSE 1024
 
-// elevator structure 
 typedef struct {
     char id[MAX_NAME];
     int lowest;
@@ -22,37 +20,19 @@ typedef struct {
     int capacity;
 } Elevator;
 
-// people structure
-typedef struct {
-    char id[MAX_ID];
-    int startFloor;
-    int endFloor;
-    int startTime;
-} Person;
-
-
-// read from the input files 
-// prints what it found in the files so far 
-
 int main(int argc, char *argv[]) {
-    FILE *buildingFile;
-    FILE *peopleFile;
-
     Elevator elevators[MAX_ELEVATORS];
-    Person people[MAX_PEOPLE];
-
     int elevatorCount = 0;
-    int peopleCount = 0;
     char response[MAX_RESPONSE];
 
     if (argc < 3) {
-        printf("Usage: %s <building_file> <port>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <building_file> <port>\n", argv[0]);
         return 1;
     }
 
-    buildingFile = fopen(argv[1], "r");
+    FILE *buildingFile = fopen(argv[1], "r");
     if (buildingFile == NULL) {
-        printf("Error: could not open building file %s\n", argv[1]);
+        fprintf(stderr, "Error: could not open building file %s\n", argv[1]);
         return 1;
     }
 
@@ -68,65 +48,18 @@ int main(int argc, char *argv[]) {
 
     fclose(buildingFile);
 
-    peopleFile = fopen(argv[2], "r");
-    if (peopleFile == NULL) {
-        printf("Error: could not open people file %s\n", argv[2]);
-        return 1;
-    }
-
-    while (peopleCount < MAX_PEOPLE &&
-           fscanf(peopleFile, "%s %d %d %d",
-                people[peopleCount].id,
-                &people[peopleCount].startFloor,
-                &people[peopleCount].endFloor,
-                &people[peopleCount].startTime) == 4) {
-        peopleCount++;
-    }
-
-    fclose(peopleFile);
-
-    printf("Loaded %d elevators:\n\n", elevatorCount);
-
-
     api_set_base_url(argv[2]);
     api_start_simulation();
+
     api_get_next_input(response, sizeof(response));
-    printf("API response: %s\n", response);
 
-    if(strcmp(response, "NONE") != 0){
+    if (strcmp(response, "NONE") != 0) {
+        char personID[MAX_ID];
+        int startFloor, endFloor;
 
-    char personID[MAX_ID];
-    int startFloor;
-    int endFloor;
+        sscanf(response, " %127[^ |] | %d | %d", personID, &startFloor, &endFloor);
 
-    sscanf(response, "%127[^|]|%d|%d", personID, &startFloor, &endFloor);
-
-    printf("Person ID: %s\n", personID);
-    printf("Start floor: %d\n", startFloor);
-    printf("End floor: %d\n", endFloor);
-
-    api_add_person_to_elevator(personID, elevators[0].id, response, sizeof(response));
-
-    printf("Add person response: %s\n", response);
-    }
-
-    
-
-    for (int i = 0; i < elevatorCount; i++) {
-        printf("Elevator: %s\n", elevators[i].id);
-        printf("Lowest floor: %d\n", elevators[i].lowest);
-        printf("Highest floor: %d\n", elevators[i].highest);
-        printf("Current floor: %d\n", elevators[i].current);
-        printf("Capacity: %d\n\n", elevators[i].capacity);
-    }
-
-    printf("Loaded %d people:\n\n", peopleCount);
-
-    for (int i = 0; i < peopleCount; i++) {
-        printf("Person: %s\n", people[i].id);
-        printf("Start floor: %d\n", people[i].startFloor);
-        printf("End floor: %d\n", people[i].endFloor);
-        printf("Start time: %d\n\n", people[i].startTime);
+        api_add_person_to_elevator(personID, elevators[0].id, response, sizeof(response));
     }
 
     return 0;
