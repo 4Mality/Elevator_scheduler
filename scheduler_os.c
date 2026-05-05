@@ -100,10 +100,11 @@ static void *input_thread(void *arg) {
     (void)arg;
     char response[MAX_RESPONSE];
 
-    while (!simDone) {
+    while (1) {
         api_get_next_input(response, sizeof(response));
 
         if (strcmp(response, "NONE") == 0) {
+            if (simDone) break; /* sim over and queue empty — we're done */
             usleep(100000);
             continue;
         }
@@ -114,12 +115,10 @@ static void *input_thread(void *arg) {
         pthread_mutex_lock(&inputMutex);
         while (inputCount == QUEUE_SIZE && !simDone)
             pthread_cond_wait(&inputNotFull, &inputMutex);
-        if (!simDone) {
-            inputQueue[inputTail] = req;
-            inputTail = (inputTail + 1) % QUEUE_SIZE;
-            inputCount++;
-            pthread_cond_signal(&inputNotEmpty);
-        }
+        inputQueue[inputTail] = req;
+        inputTail = (inputTail + 1) % QUEUE_SIZE;
+        inputCount++;
+        pthread_cond_signal(&inputNotEmpty);
         pthread_mutex_unlock(&inputMutex);
     }
 
