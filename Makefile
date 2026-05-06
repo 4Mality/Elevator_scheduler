@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11
+CFLAGS = -Wall -Wextra -std=c11 -D_XOPEN_SOURCE=600
 LIBS = -lcurl -lpthread
 
 TARGET = scheduler_os
